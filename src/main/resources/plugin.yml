@@ -1,0 +1,8 @@
+name: Region
+main: it.buzz.premierstudios.Region
+version: 1.0
+author: Buzz
+api-version: 1.13
+
+commands:
+  region:
