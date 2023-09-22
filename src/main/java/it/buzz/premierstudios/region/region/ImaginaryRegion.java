@@ -45,6 +45,9 @@ public class ImaginaryRegion {
         return owner.equalsIgnoreCase(player.getName());
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
 
     public Set<Chunk> chunks() {
         Set<Chunk> chunks = new HashSet<>();

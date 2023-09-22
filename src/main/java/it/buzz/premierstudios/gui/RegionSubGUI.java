@@ -6,8 +6,10 @@ import fr.minuskube.inv.content.InventoryContents;
 import fr.minuskube.inv.content.InventoryProvider;
 import fr.minuskube.inv.content.Pagination;
 import fr.minuskube.inv.content.SlotIterator;
+import it.buzz.premierstudios.data.utils.Pair;
 import it.buzz.premierstudios.gui.utils.ItemBuilder;
 import it.buzz.premierstudios.region.RegionHandler;
+import it.buzz.premierstudios.region.conversation.PlayerResponse;
 import it.buzz.premierstudios.region.region.ImaginaryRegion;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.ChatColor;
@@ -21,12 +23,14 @@ import java.util.List;
 public class RegionSubGUI implements InventoryProvider {
 
     private static SmartInventory INVENTORY;
+
+    private final RegionHandler regionHandler;
     private final ImaginaryRegion region;
 
-    public static SmartInventory getInventory(ImaginaryRegion region) {
+    public static SmartInventory getInventory(RegionHandler handler, ImaginaryRegion region) {
         INVENTORY = SmartInventory.builder()
                 .id("regions_sub")
-                .provider(new RegionSubGUI(region))
+                .provider(new RegionSubGUI(handler, region))
                 .size(4, 9)
                 .title(ChatColor.DARK_GRAY + "Region #" + region.getId())
                 .build();
@@ -41,7 +45,12 @@ public class RegionSubGUI implements InventoryProvider {
                         .get(),
                 event -> {
                     event.getWhoClicked().closeInventory();
-                    event.getWhoClicked().sendMessage(ChatColor.GREEN + "Do /region rename <region> <name>");
+                    regionHandler.getPlayersReponses().put(event.getWhoClicked().getName(),
+                            new Pair<>(PlayerResponse.REGION_RENAME, region.getName()));
+
+                    event.getWhoClicked().sendMessage("");
+                    event.getWhoClicked().sendMessage(ChatColor.GREEN + "Send in chat the new name");
+                    event.getWhoClicked().sendMessage("");
                 }
         ));
 
@@ -51,7 +60,12 @@ public class RegionSubGUI implements InventoryProvider {
                         .get(),
                 event -> {
                     event.getWhoClicked().closeInventory();
-                    event.getWhoClicked().sendMessage(ChatColor.GREEN + "Do /region add <name> <player>");
+                    regionHandler.getPlayersReponses().put(event.getWhoClicked().getName(),
+                            new Pair<>(PlayerResponse.WHITELIST_ADD, region.getName()));
+
+                    event.getWhoClicked().sendMessage("");
+                    event.getWhoClicked().sendMessage(ChatColor.GREEN + "Send in chat the player name");
+                    event.getWhoClicked().sendMessage("");
                 }
         ));
 
@@ -61,7 +75,12 @@ public class RegionSubGUI implements InventoryProvider {
                         .get(),
                 event -> {
                     event.getWhoClicked().closeInventory();
-                    event.getWhoClicked().sendMessage(ChatColor.GREEN + "Do /region remove <name> <player>");
+                    regionHandler.getPlayersReponses().put(event.getWhoClicked().getName(),
+                            new Pair<>(PlayerResponse.WHITELIST_REMOVE, region.getName()));
+
+                    event.getWhoClicked().sendMessage("");
+                    event.getWhoClicked().sendMessage(ChatColor.GREEN + "Send in chat the player name");
+                    event.getWhoClicked().sendMessage("");
                 }
         ));
 
@@ -71,7 +90,10 @@ public class RegionSubGUI implements InventoryProvider {
                         .get(),
                 event -> {
                     event.getWhoClicked().closeInventory();
+
+                    event.getWhoClicked().sendMessage("");
                     event.getWhoClicked().sendMessage(ChatColor.GREEN + "Do /region redefine <name>");
+                    event.getWhoClicked().sendMessage("");
                 }
         ));
 

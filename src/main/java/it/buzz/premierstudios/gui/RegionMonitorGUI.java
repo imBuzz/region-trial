@@ -47,7 +47,7 @@ public class RegionMonitorGUI implements InventoryProvider {
                                     ChatColor.GRAY + "Members: " + ChatColor.WHITE + region.users().size()
                             )
                             .get(), event -> {
-                        RegionSubGUI.getInventory(region).open(player);
+                        RegionSubGUI.getInventory(regionHandler, region).open(player);
                     }
             ));
         }

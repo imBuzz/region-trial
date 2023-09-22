@@ -30,7 +30,8 @@ public class MySQLConnector extends AbstractPluginHolder implements Startable {
     public void start() {
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl("jdbc:mysql://localhost:3306/minecraft");
-        config.setUsername("minecraft");
+        config.setUsername("root");
+        config.setPassword("root");
         config.addDataSourceProperty("cachePrepStmts", "true");
         config.addDataSourceProperty("prepStmtCacheSize", "250");
         config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");

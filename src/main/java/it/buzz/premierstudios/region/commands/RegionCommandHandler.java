@@ -88,6 +88,31 @@ public class RegionCommandHandler extends AbstractPluginHolder implements Starta
                     sender.sendMessage(ChatColor.GREEN + "You have invited " + target.getName());
                     target.sendMessage(ChatColor.GREEN + "You have been invited by: " + sender.getName() + " into the " + region.getName() + " region");
                 }
+                case "rename" -> {
+                    if (!sender.hasPermission("region.rename")){
+                        sender.sendMessage(ChatColor.RED + "You don't have the permission to do that!");
+                        return;
+                    }
+
+                    if (args.length < 3){
+                        sender.sendMessage(ChatColor.RED + "Usage: /region rename <old_name> <name>");
+                        return;
+                    }
+
+                    ImaginaryRegion region = plugin.getRegionHandler().getRegion(args[1]);
+                    if (region == null){
+                        sender.sendMessage(ChatColor.RED + "No region found with this name");
+                        return;
+                    }
+
+                    if (!region.isOwner((Player) sender)){
+                        sender.sendMessage(ChatColor.RED + "You have to be the owner of the region in order to invite other players!");
+                        return;
+                    }
+
+                    region.setName(args[2]);
+                    sender.sendMessage(ChatColor.GREEN + "New name: " + args[2]);
+                }
                 case "create" -> {
                     if (!sender.hasPermission("region.create")){
                         sender.sendMessage(ChatColor.RED + "You don't have the permission to do that!");

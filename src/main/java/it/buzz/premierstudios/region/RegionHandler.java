@@ -1,13 +1,19 @@
 package it.buzz.premierstudios.region;
 
-import com.google.common.collect.ImmutableSet;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.RemovalCause;
+import com.github.benmanes.caffeine.cache.Scheduler;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import it.buzz.premierstudios.Region;
 import it.buzz.premierstudios.data.MySQLConnector;
+import it.buzz.premierstudios.data.utils.Pair;
 import it.buzz.premierstudios.holder.AbstractPluginHolder;
 import it.buzz.premierstudios.holder.Startable;
+import it.buzz.premierstudios.region.conversation.PlayerResponse;
 import it.buzz.premierstudios.region.region.ImaginaryRegion;
 import it.buzz.premierstudios.region.region.metadata.RegionMetadata;
+import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
@@ -16,9 +22,11 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 
 import java.sql.*;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -30,6 +38,21 @@ public class RegionHandler extends AbstractPluginHolder implements Startable {
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("region-thread").build());
     private final ConcurrentHashMap<String, Set<ImaginaryRegion>> regions = new ConcurrentHashMap<>();
+
+    @Getter private final Cache<String, Pair<PlayerResponse, String>> playersReponses = Caffeine.newBuilder()
+            .expireAfterWrite(Duration.ofSeconds(15))
+            .scheduler(Scheduler.systemScheduler())
+            .removalListener(((key, value, cause) -> {
+                if (cause == RemovalCause.EXPIRED){
+                    Player player = Bukkit.getPlayerExact((String) key);
+                    if (player != null){
+                        player.sendMessage("");
+                        player.sendMessage(ChatColor.RED + "Timed out for insert a name");
+                        player.sendMessage("");
+                    }
+                }
+            }))
+            .build();
 
     public RegionHandler(Region plugin) {
         super(plugin);
@@ -176,6 +199,32 @@ public class RegionHandler extends AbstractPluginHolder implements Startable {
                 });
             });
         });
+    }
+
+    @EventHandler
+    private void chatEvent(AsyncPlayerChatEvent event){
+        if (!playersReponses.asMap().containsKey(event.getPlayer().getName())) return;
+        event.setCancelled(true);
+
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            final Pair<PlayerResponse, String> pair = playersReponses.asMap().get(event.getPlayer().getName());
+            switch (pair.o1()){
+                case WHITELIST_ADD -> {
+                    Bukkit.dispatchCommand(event.getPlayer(),
+                            "region add " + pair.o2() + " " + event.getMessage().split(" ")[0]);
+                }
+                case WHITELIST_REMOVE -> {
+                    Bukkit.dispatchCommand(event.getPlayer(),
+                            "region remove " + pair.o2() + " " + event.getMessage().split(" ")[0]);
+                }
+                case REGION_RENAME -> {
+                    Bukkit.dispatchCommand(event.getPlayer(),
+                            "region rename " + pair.o2() + " " + event.getMessage().split(" ")[0]);
+                }
+            }
+
+            playersReponses.invalidate(event.getPlayer().getName());
+        }, 1L);
     }
 
     @EventHandler
